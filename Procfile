@@ -1,1 +1,1 @@
-   web: gunicorn app:app --bind 0.0.0.0:$PORT 
+ web: gunicorn app:app --timeout 300 --workers 1 --threads 2 --worker-class gthread --worker-tmp-dir /dev/shm
