@@ -97,8 +97,8 @@ def load_model(model_path):
             # Create models directory if it doesn't exist
             os.makedirs(os.path.dirname(model_path), exist_ok=True)
             
-            # Google Drive file ID
-            file_id = '1gUgy25LhiA4G2yEdvc9voRAqZKW1If__'
+            # Google Drive file ID (updated with new link)
+            file_id = '1I8ZkpH9g4eUOfu8DNaSD5psqae7KwEBQ'
             url = f'https://drive.google.com/uc?id={file_id}'
             
             try:
