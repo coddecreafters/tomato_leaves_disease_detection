@@ -97,17 +97,18 @@ def load_model(model_path):
             # Create models directory if it doesn't exist
             os.makedirs(os.path.dirname(model_path), exist_ok=True)
             
-            # Google Drive file ID (from your folder)
-            file_id = '1gUgy25LhiA4G2yEdvc9voRAqZKW1If__'
-            url = f'https://drive.google.com/uc?id={file_id}'
+            # Google Drive folder ID and file name
+            folder_id = '1gUgy25LhiA4G2yEdvc9voRAqZKW1If__'
+            file_name = 'tomato_disease_model.h5'
+            url = f'https://drive.google.com/drive/folders/{folder_id}'
             
             try:
-                # Download the model
-                gdown.download(
+                # Download the model from the folder
+                gdown.download_folder(
                     url,
-                    model_path,
+                    output=os.path.dirname(model_path),
                     quiet=False,
-                    fuzzy=True
+                    use_cookies=True
                 )
                 
                 # Verify the file exists after download
@@ -117,7 +118,22 @@ def load_model(model_path):
                     
             except Exception as download_error:
                 print(f"Error downloading model: {str(download_error)}")
-                return None
+                # Try alternative download method
+                try:
+                    print("Trying alternative download method...")
+                    gdown.download_folder(
+                        url,
+                        output=os.path.dirname(model_path),
+                        quiet=False,
+                        use_cookies=True,
+                        verify=False
+                    )
+                    if not os.path.exists(model_path):
+                        raise FileNotFoundError("Model download failed with alternative method")
+                    print(f"Model downloaded successfully using alternative method to: {model_path}")
+                except Exception as alt_error:
+                    print(f"Alternative download method failed: {str(alt_error)}")
+                    return None
             
         print(f"Loading model from: {model_path}")
         model = tf.keras.models.load_model(model_path)
