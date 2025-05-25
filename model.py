@@ -3,6 +3,7 @@ from tensorflow.keras import layers, models
 import numpy as np
 from PIL import Image
 import os
+import gdown
 
 def create_model(input_shape=(224, 224, 3), num_classes=5):
     model = models.Sequential([
@@ -92,7 +93,17 @@ def load_model(model_path):
     """Load the trained model"""
     try:
         if not os.path.exists(model_path):
-            raise FileNotFoundError(f"Model file not found: {model_path}")
+            print("Model not found locally, downloading from Google Drive...")
+            # Create models directory if it doesn't exist
+            os.makedirs(os.path.dirname(model_path), exist_ok=True)
+            
+            # Google Drive file ID from your shared link
+            file_id = '1gUgy25LhiA4G2yEdvc9voRAqZKW1If__'
+            url = f'https://drive.google.com/uc?id={file_id}'
+            
+            # Download the model
+            gdown.download(url, model_path, quiet=False)
+            print("Model downloaded successfully!")
             
         model = tf.keras.models.load_model(model_path)
         
