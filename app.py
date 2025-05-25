@@ -21,9 +21,17 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 # Create uploads folder if it doesn't exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Load the model
-MODEL_PATH = os.path.join(BASE_DIR, 'models', 'tomato_disease_model.h5')
-model = load_model(MODEL_PATH)
+# Load the model with error handling
+try:
+    MODEL_PATH = os.path.join(BASE_DIR, 'models', 'tomato_disease_model.h5')
+    if not os.path.exists(MODEL_PATH):
+        raise FileNotFoundError(f"Model file not found at {MODEL_PATH}")
+    model = load_model(MODEL_PATH)
+    if model is None:
+        raise ValueError("Model failed to load")
+except Exception as e:
+    print(f"Error loading model: {str(e)}")
+    model = None
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -34,6 +42,9 @@ def home():
 
 @app.route('/predict', methods=['POST'])
 def predict():
+    if model is None:
+        return jsonify({'error': 'Model not loaded properly. Please check server logs.'})
+    
     if 'file' not in request.files:
         return jsonify({'error': 'No file uploaded'})
     
@@ -49,6 +60,9 @@ def predict():
             
             # Make prediction
             predictions = predict_disease(model, filepath)
+            if predictions is None:
+                return jsonify({'error': 'Failed to make prediction'})
+                
             predicted_class = DISEASE_CLASSES[np.argmax(predictions)]
             confidence = float(np.max(predictions))
             
@@ -60,7 +74,10 @@ def predict():
                 'confidence': confidence
             })
         except Exception as e:
-            return jsonify({'error': str(e)})
+            # Clean up file if it exists
+            if os.path.exists(filepath):
+                os.remove(filepath)
+            return jsonify({'error': f'Prediction error: {str(e)}'})
     
     return jsonify({'error': 'Invalid file type'})
 
