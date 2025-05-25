@@ -100,9 +100,13 @@ def load_model(model_path):
             # Google Drive direct download link
             url = 'https://drive.google.com/uc?export=download&id=1gUgy25LhiA4G2yEdvc9voRAqZKW1If__'
             
-            # Download the model
-            gdown.download(url, model_path, quiet=False)
-            print("Model downloaded successfully!")
+            try:
+                # Download the model
+                gdown.download(url, model_path, quiet=False)
+                print("Model downloaded successfully!")
+            except Exception as download_error:
+                print(f"Error downloading model: {str(download_error)}")
+                return None
             
         model = tf.keras.models.load_model(model_path)
         
@@ -117,4 +121,4 @@ def load_model(model_path):
         return model
     except Exception as e:
         print(f"Error loading model: {str(e)}")
-        return Nones
+        return None
