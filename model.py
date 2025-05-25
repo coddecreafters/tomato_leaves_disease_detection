@@ -97,18 +97,23 @@ def load_model(model_path):
             # Create models directory if it doesn't exist
             os.makedirs(os.path.dirname(model_path), exist_ok=True)
             
-            # Google Drive direct download link
-            url = 'https://drive.google.com/uc?export=download&id=1gUgy25LhiA4G2yEdvc9voRAqZKW1If__'
+            # Google Drive file ID
+            file_id = '1gUgy25LhiA4G2yEdvc9voRAqZKW1If__'
+            url = f'https://drive.google.com/uc?id={file_id}'
             
             try:
-                # Download the model
-                gdown.download(url, model_path, quiet=False)
+                # Download the model with fuzzy matching
+                gdown.download(url, model_path, quiet=False, fuzzy=True)
+                if not os.path.exists(model_path):
+                    raise FileNotFoundError("Model download failed")
                 print("Model downloaded successfully!")
             except Exception as download_error:
                 print(f"Error downloading model: {str(download_error)}")
                 return None
             
+        print(f"Loading model from: {model_path}")
         model = tf.keras.models.load_model(model_path)
+        print("Model loaded successfully!")
         
         # Verify model structure
         if not isinstance(model, tf.keras.Model):
