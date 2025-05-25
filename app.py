@@ -3,18 +3,17 @@ import os
 from werkzeug.utils import secure_filename
 from model import load_model, predict_disease, DISEASE_CLASSES
 import numpy as np
-from model import load_model, predict_image
 
 # Get the absolute path to the project directory
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__, 
-       template_folder=os.path.join(BASE_DIR, 'templates'),
-       static_folder=os.path.join(BASE_DIR, 'static')
-   )
+    template_folder=os.path.join(BASE_DIR, 'templates'),
+    static_folder=os.path.join(BASE_DIR, 'static')
+)
 
 # Configure upload folder
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
@@ -23,7 +22,8 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Load the model
-model = load_model('models/tomato_disease_model.h5')
+MODEL_PATH = os.path.join(BASE_DIR, 'models', 'tomato_disease_model.h5')
+model = load_model(MODEL_PATH)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -65,5 +65,5 @@ def predict():
     return jsonify({'error': 'Invalid file type'})
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port) 
+    port = int(os.environ.get('PORT', 10000))  # Changed to 10000 to match Render's default
+    app.run(host='0.0.0.0', port=port)
