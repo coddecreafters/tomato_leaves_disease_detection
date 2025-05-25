@@ -97,9 +97,8 @@ def load_model(model_path):
             # Create models directory if it doesn't exist
             os.makedirs(os.path.dirname(model_path), exist_ok=True)
             
-            # Google Drive file ID from your shared link
-            file_id = '1gUgy25LhiA4G2yEdvc9voRAqZKW1If__'
-            url = f'https://drive.google.com/uc?id={file_id}'
+            # Google Drive direct download link
+            url = 'https://drive.google.com/uc?export=download&id=1gUgy25LhiA4G2yEdvc9voRAqZKW1If__'
             
             # Download the model
             gdown.download(url, model_path, quiet=False)
@@ -118,4 +117,4 @@ def load_model(model_path):
         return model
     except Exception as e:
         print(f"Error loading model: {str(e)}")
-        return None
+        return Nones
