@@ -4,6 +4,18 @@ import os
 from model import load_model, predict_disease, DISEASE_CLASSES
 import tensorflow as tf
 
+# Configure TensorFlow memory growth
+gpus = tf.config.list_physical_devices('GPU')
+if gpus:
+    try:
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+    except RuntimeError as e:
+        print(f"Error setting memory growth: {e}")
+
+# Set TensorFlow to use CPU only
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
