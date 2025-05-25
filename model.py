@@ -97,16 +97,20 @@ def load_model(model_path):
             # Create models directory if it doesn't exist
             os.makedirs(os.path.dirname(model_path), exist_ok=True)
             
-            # Google Drive file ID (updated with new link)
-            file_id = '1I8ZkpH9g4eUOfu8DNaSD5psqae7KwEBQ'
-            url = f'https://drive.google.com/uc?id={file_id}'
+            # Google Drive direct download link
+            url = 'https://drive.google.com/uc?export=download&id=1I8ZkpH9g4eUOfu8DNaSD5psqae7KwEBQ'
             
             try:
-                # Download the model with fuzzy matching
-                gdown.download(url, model_path, quiet=False, fuzzy=True)
-                if not os.path.exists(model_path):
+                # Download the model with fuzzy matching and output path
+                output = gdown.download(url, model_path, quiet=False, fuzzy=True)
+                if output is None:
                     raise FileNotFoundError("Model download failed")
-                print("Model downloaded successfully!")
+                print(f"Model downloaded successfully to: {output}")
+                
+                # Verify the file exists after download
+                if not os.path.exists(model_path):
+                    raise FileNotFoundError(f"Model file not found at {model_path} after download")
+                    
             except Exception as download_error:
                 print(f"Error downloading model: {str(download_error)}")
                 return None
