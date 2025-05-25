@@ -4,26 +4,15 @@ import os
 from model import load_model, predict_disease, DISEASE_CLASSES
 import tensorflow as tf
 import gc
+import logging
 
-# Configure TensorFlow memory growth
-gpus = tf.config.list_physical_devices('GPU')
-if gpus:
-    try:
-        for gpu in gpus:
-            tf.config.experimental.set_memory_growth(gpu, True)
-    except RuntimeError as e:
-        print(f"Error setting memory growth: {e}")
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
-# Set TensorFlow to use CPU only
+# Set TensorFlow to use CPU only and reduce logging
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-
-# Limit TensorFlow memory usage
-tf.config.set_logical_device_configuration(
-    tf.config.list_physical_devices('CPU')[0],
-    [tf.config.LogicalDeviceConfiguration(memory_limit=1024)]
-)
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -40,11 +29,14 @@ model = None
 def initialize():
     global model
     try:
+        logger.info("Initializing model...")
         model = load_model(model_path)
         if model is None:
-            print("Failed to load model during initialization")
+            logger.error("Failed to load model during initialization")
+        else:
+            logger.info("Model loaded successfully")
     except Exception as e:
-        print(f"Error during model initialization: {str(e)}")
+        logger.error(f"Error during model initialization: {str(e)}")
 
 @app.route('/')
 def home():
@@ -68,7 +60,7 @@ def predict():
             # Ensure model is loaded
             global model
             if model is None:
-                print("Model not loaded, attempting to load...")
+                logger.warning("Model not loaded, attempting to load...")
                 model = load_model(model_path)
                 if model is None:
                     return jsonify({'error': 'Model not loaded properly. Please check server logs.'}), 500
@@ -97,12 +89,13 @@ def predict():
             })
             
     except Exception as e:
-        print(f"Error during prediction: {str(e)}")
+        logger.error(f"Error during prediction: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     # Ensure model is loaded before starting server
+    logger.info("Starting application...")
     model = load_model(model_path)
     if model is None:
-        print("Warning: Model not loaded properly. The application may not function correctly.")
+        logger.warning("Model not loaded properly. The application may not function correctly.")
     app.run(host='0.0.0.0', port=10000)
