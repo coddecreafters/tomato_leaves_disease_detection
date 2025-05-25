@@ -3,13 +3,15 @@ import os
 from werkzeug.utils import secure_filename
 from model import load_model, predict_disease, DISEASE_CLASSES
 import numpy as np
+from model import load_model, predict_image
 
 # Get the absolute path to the project directory
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__, 
-    template_folder=os.path.join(BASE_DIR, 'templates'),
-    static_folder=os.path.join(BASE_DIR, 'static'))
+       template_folder=os.path.join(BASE_DIR, 'templates'),
+       static_folder=os.path.join(BASE_DIR, 'static')
+   )
 
 # Configure upload folder
 UPLOAD_FOLDER = 'uploads'
