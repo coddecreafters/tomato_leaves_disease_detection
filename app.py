@@ -3,6 +3,7 @@ from werkzeug.utils import secure_filename
 import os
 from model import load_model, predict_disease, DISEASE_CLASSES
 import tensorflow as tf
+import gc
 
 # Configure TensorFlow memory growth
 gpus = tf.config.list_physical_devices('GPU')
@@ -15,6 +16,14 @@ if gpus:
 
 # Set TensorFlow to use CPU only
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
+# Limit TensorFlow memory usage
+tf.config.set_logical_device_configuration(
+    tf.config.list_physical_devices('CPU')[0],
+    [tf.config.LogicalDeviceConfiguration(memory_limit=1024)]
+)
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -78,6 +87,9 @@ def predict():
                 os.remove(filepath)
             except:
                 pass
+                
+            # Force garbage collection
+            gc.collect()
                 
             return jsonify({
                 'prediction': top_prediction,
