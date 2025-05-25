@@ -18,12 +18,6 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 tf.config.threading.set_inter_op_parallelism_threads(1)
 tf.config.threading.set_intra_op_parallelism_threads(1)
 
-# Limit TensorFlow memory usage
-tf.config.set_logical_device_configuration(
-    tf.config.list_physical_devices('CPU')[0],
-    [tf.config.LogicalDeviceConfiguration(memory_limit=1024)]
-)
-
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
