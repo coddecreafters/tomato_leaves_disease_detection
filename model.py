@@ -97,17 +97,17 @@ def load_model(model_path):
             # Create models directory if it doesn't exist
             os.makedirs(os.path.dirname(model_path), exist_ok=True)
             
-            # Google Drive folder ID and file name
-            folder_id = '1gUgy25LhiA4G2yEdvc9voRAqZKW1If__'
-            file_name = 'tomato_disease_model.h5'
-            url = f'https://drive.google.com/drive/folders/{folder_id}'
+            # Google Drive direct file ID
+            file_id = '1I8ZkpH9g4eUOfu8DNaSD5psqae7KwEBQ'
+            url = f'https://drive.google.com/uc?id={file_id}'
             
             try:
-                # Download the model from the folder
-                gdown.download_folder(
+                # Download the model with authentication
+                gdown.download(
                     url,
-                    output=os.path.dirname(model_path),
+                    model_path,
                     quiet=False,
+                    fuzzy=True,
                     use_cookies=True
                 )
                 
@@ -121,10 +121,11 @@ def load_model(model_path):
                 # Try alternative download method
                 try:
                     print("Trying alternative download method...")
-                    gdown.download_folder(
+                    gdown.download(
                         url,
-                        output=os.path.dirname(model_path),
+                        model_path,
                         quiet=False,
+                        fuzzy=True,
                         use_cookies=True,
                         verify=False
                     )
