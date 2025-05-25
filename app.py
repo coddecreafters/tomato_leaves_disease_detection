@@ -14,6 +14,15 @@ logger = logging.getLogger(__name__)
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
+# Configure TensorFlow memory growth
+gpus = tf.config.list_physical_devices('GPU')
+if gpus:
+    try:
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+    except RuntimeError as e:
+        logger.warning(f"GPU memory growth setting failed: {e}")
+
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
@@ -35,6 +44,8 @@ def initialize():
             logger.error("Failed to load model during initialization")
         else:
             logger.info("Model loaded successfully")
+            # Clear any unused memory
+            gc.collect()
     except Exception as e:
         logger.error(f"Error during model initialization: {str(e)}")
 
