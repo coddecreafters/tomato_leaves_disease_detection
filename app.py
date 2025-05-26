@@ -31,15 +31,6 @@ if gpus:
     except RuntimeError as e:
         logger.warning(f"GPU memory growth setting failed: {e}")
 
-# Configure TensorFlow memory limits
-try:
-    tf.config.set_logical_device_configuration(
-        tf.config.list_physical_devices('CPU')[0],
-        [tf.config.LogicalDeviceConfiguration(memory_limit=1024)]  # 1GB limit
-    )
-except (IndexError, RuntimeError) as e:
-    logger.warning(f"Failed to set CPU memory limit: {e}")
-
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = os.path.join(tempfile.gettempdir(), 'tomato_disease_uploads')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
