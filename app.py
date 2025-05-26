@@ -18,6 +18,10 @@ logger = logging.getLogger(__name__)
 tf.config.threading.set_inter_op_parallelism_threads(1)
 tf.config.threading.set_intra_op_parallelism_threads(1)
 
+# Configure TensorFlow to use CPU only
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 # Set memory growth for GPU if available
 gpus = tf.config.list_physical_devices('GPU')
 if gpus:
@@ -26,13 +30,6 @@ if gpus:
             tf.config.experimental.set_memory_growth(gpu, True)
     except RuntimeError as e:
         logger.warning(f"GPU memory growth setting failed: {e}")
-
-# Configure TensorFlow to use CPU only
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-
-# Set TensorFlow memory growth
-tf.config.experimental.set_memory_growth(tf.config.list_physical_devices('CPU')[0], True)
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = os.path.join(tempfile.gettempdir(), 'tomato_disease_uploads')
