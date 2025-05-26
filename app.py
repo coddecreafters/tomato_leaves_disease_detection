@@ -44,6 +44,9 @@ MODEL_DIR.mkdir(exist_ok=True)
 MODEL_PATH = MODEL_DIR / 'tomato_disease_model.h5'
 MODEL_URL = "https://huggingface.co/tveesha15/tomato-disease-model/resolve/main/tomato_disease_model.h5"
 
+# Initialize model as None
+model = None
+
 def download_model():
     """Download the model from Hugging Face if it doesn't exist locally."""
     try:
@@ -65,6 +68,7 @@ def download_model():
         return False
 
 def load_model_safely():
+    """Load the model safely, downloading it if necessary."""
     global model
     try:
         if model is None:
@@ -100,6 +104,7 @@ def load_model_safely():
 
 @app.before_first_request
 def initialize():
+    """Initialize the application and load the model."""
     logger.info("Initializing application...")
     if not load_model_safely():
         logger.error("Failed to initialize model")
@@ -112,6 +117,8 @@ def home():
 
 @app.route('/predict', methods=['POST'])
 def predict():
+    """Handle prediction requests."""
+    global model
     try:
         if 'file' not in request.files:
             logger.warning("No file uploaded")
