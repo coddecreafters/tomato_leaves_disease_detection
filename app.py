@@ -30,8 +30,11 @@ if gpus:
         logger.warning(f"GPU memory growth setting failed: {e}")
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = tempfile.mkdtemp()  # Use temporary directory
+app.config['UPLOAD_FOLDER'] = os.path.join(tempfile.gettempdir(), 'tomato_disease_uploads')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+
+# Ensure upload folder exists
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Load model at startup
 model_path = os.path.join('models', 'tomato_disease_model.h5')
@@ -94,10 +97,20 @@ def predict():
             return jsonify({'error': 'No file selected'}), 400
             
         if file:
+            # Create a unique filename
             filename = secure_filename(file.filename)
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            
+            # Ensure the upload directory exists
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+            
             logger.info(f"Saving file to {filepath}")
             file.save(filepath)
+            
+            # Verify file was saved
+            if not os.path.exists(filepath):
+                logger.error(f"File was not saved successfully at {filepath}")
+                return jsonify({'error': 'Failed to save uploaded file'}), 500
             
             try:
                 # Ensure model is loaded
@@ -124,8 +137,9 @@ def predict():
             finally:
                 # Clean up uploaded file
                 try:
-                    os.remove(filepath)
-                    logger.info("Cleaned up uploaded file")
+                    if os.path.exists(filepath):
+                        os.remove(filepath)
+                        logger.info("Cleaned up uploaded file")
                 except Exception as e:
                     logger.warning(f"Failed to clean up file: {str(e)}")
                 
@@ -141,8 +155,9 @@ def predict():
 def cleanup(exception=None):
     """Clean up temporary files when the application context ends."""
     try:
-        shutil.rmtree(app.config['UPLOAD_FOLDER'])
-        logger.info("Cleaned up temporary directory")
+        if os.path.exists(app.config['UPLOAD_FOLDER']):
+            shutil.rmtree(app.config['UPLOAD_FOLDER'])
+            logger.info("Cleaned up temporary directory")
     except Exception as e:
         logger.warning(f"Failed to clean up temporary directory: {str(e)}")
 
