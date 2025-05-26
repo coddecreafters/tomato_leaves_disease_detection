@@ -31,14 +31,8 @@ if gpus:
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-# Set memory limit for TensorFlow
-try:
-    tf.config.set_logical_device_configuration(
-        tf.config.list_physical_devices('CPU')[0],
-        [tf.config.LogicalDeviceConfiguration(memory_limit=1024)]  # 1GB limit
-    )
-except RuntimeError as e:
-    logger.warning(f"Failed to set CPU memory limit: {e}")
+# Set TensorFlow memory growth
+tf.config.experimental.set_memory_growth(tf.config.list_physical_devices('CPU')[0], True)
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = os.path.join(tempfile.gettempdir(), 'tomato_disease_uploads')
