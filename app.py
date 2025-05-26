@@ -14,15 +14,11 @@ from pathlib import Path
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-# Set TensorFlow to use CPU only and reduce logging
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-
 # Configure TensorFlow memory settings
 tf.config.threading.set_inter_op_parallelism_threads(1)
 tf.config.threading.set_intra_op_parallelism_threads(1)
 
-# Limit TensorFlow memory growth
+# Set memory growth for GPU if available
 gpus = tf.config.list_physical_devices('GPU')
 if gpus:
     try:
@@ -30,6 +26,19 @@ if gpus:
             tf.config.experimental.set_memory_growth(gpu, True)
     except RuntimeError as e:
         logger.warning(f"GPU memory growth setting failed: {e}")
+
+# Configure TensorFlow to use CPU only
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
+# Set memory limit for TensorFlow
+try:
+    tf.config.set_logical_device_configuration(
+        tf.config.list_physical_devices('CPU')[0],
+        [tf.config.LogicalDeviceConfiguration(memory_limit=1024)]  # 1GB limit
+    )
+except RuntimeError as e:
+    logger.warning(f"Failed to set CPU memory limit: {e}")
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = os.path.join(tempfile.gettempdir(), 'tomato_disease_uploads')
@@ -257,6 +266,10 @@ if __name__ == '__main__':
     logger.info("Starting application...")
     if not load_model_safely():
         logger.warning("Model not loaded properly. The application may not function correctly.")
+    
+    # Get port from environment variable or use default
     port = int(os.environ.get('PORT', 10000))
     logger.info(f"Starting server on port {port}")
-    app.run(host='0.0.0.0', port=port)
+    
+    # Start the Flask application
+    app.run(host='0.0.0.0', port=port, threaded=True)
