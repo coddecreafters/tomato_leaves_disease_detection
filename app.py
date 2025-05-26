@@ -7,6 +7,8 @@ import gc
 import logging
 import tempfile
 import shutil
+import requests
+from pathlib import Path
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -36,24 +38,48 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 # Ensure upload folder exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# Load model at startup
-model_path = os.path.join('models', 'tomato_disease_model.h5')
-model = None
+# Model configuration
+MODEL_DIR = Path('models')
+MODEL_DIR.mkdir(exist_ok=True)
+MODEL_PATH = MODEL_DIR / 'tomato_disease_model.h5'
+MODEL_URL = "https://huggingface.co/tveesha15/tomato-disease-model/resolve/main/tomato_disease_model.h5"
+
+def download_model():
+    """Download the model from Hugging Face if it doesn't exist locally."""
+    try:
+        logger.info(f"Downloading model from {MODEL_URL}")
+        response = requests.get(MODEL_URL, stream=True)
+        response.raise_for_status()
+        
+        total_size = int(response.headers.get('content-length', 0))
+        block_size = 1024  # 1 Kibibyte
+        
+        with open(MODEL_PATH, 'wb') as file:
+            for data in response.iter_content(block_size):
+                file.write(data)
+                
+        logger.info("Model downloaded successfully")
+        return True
+    except Exception as e:
+        logger.error(f"Error downloading model: {str(e)}")
+        return False
 
 def load_model_safely():
     global model
     try:
         if model is None:
             logger.info("Starting model load process...")
-            logger.info(f"Model path: {model_path}")
+            logger.info(f"Model path: {MODEL_PATH}")
             
-            # Check if model file exists
-            if not os.path.exists(model_path):
-                logger.error(f"Model file not found at {model_path}")
-                return False
-                
+            # Check if model file exists, download if it doesn't
+            if not MODEL_PATH.exists():
+                logger.info("Model file not found locally, attempting to download...")
+                if not download_model():
+                    logger.error("Failed to download model")
+                    return False
+            
             logger.info("Loading model from file...")
-            model = load_model(model_path)
+            model = load_model(str(MODEL_PATH))
             
             if model is None:
                 logger.error("Model loaded but returned None")
