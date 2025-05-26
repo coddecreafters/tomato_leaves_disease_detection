@@ -56,16 +56,47 @@ def download_model():
         
         total_size = int(response.headers.get('content-length', 0))
         block_size = 1024  # 1 Kibibyte
+        downloaded = 0
         
         with open(MODEL_PATH, 'wb') as file:
             for data in response.iter_content(block_size):
                 file.write(data)
+                downloaded += len(data)
+                # Log progress every 10MB
+                if downloaded % (10 * 1024 * 1024) < block_size:
+                    logger.info(f"Downloaded {downloaded / (1024 * 1024):.1f}MB of {total_size / (1024 * 1024):.1f}MB")
                 
         logger.info("Model downloaded successfully")
         return True
     except Exception as e:
         logger.error(f"Error downloading model: {str(e)}")
         return False
+
+def quantize_model(model):
+    """Quantize the model to reduce memory usage."""
+    try:
+        logger.info("Starting model quantization...")
+        converter = tf.lite.TFLiteConverter.from_keras_model(model)
+        converter.optimizations = [tf.lite.Optimize.DEFAULT]
+        converter.target_spec.supported_types = [tf.float16]
+        converter.target_spec.supported_ops = [
+            tf.lite.OpsSet.TFLITE_BUILTINS,
+            tf.lite.OpsSet.SELECT_TF_OPS
+        ]
+        
+        logger.info("Converting model to TFLite format...")
+        tflite_model = converter.convert()
+        
+        # Save the quantized model
+        quantized_path = MODEL_DIR / 'tomato_disease_model_quantized.tflite'
+        with open(quantized_path, 'wb') as f:
+            f.write(tflite_model)
+        
+        logger.info(f"Model quantized and saved to {quantized_path}")
+        return quantized_path
+    except Exception as e:
+        logger.error(f"Error quantizing model: {str(e)}")
+        return None
 
 def load_model_safely():
     """Load the model safely, downloading it if necessary."""
@@ -89,15 +120,34 @@ def load_model_safely():
             
             # Load model with memory optimization
             with tf.device('/CPU:0'):
-                model = load_model(str(MODEL_PATH))
+                logger.info("Loading Keras model...")
+                keras_model = load_model(str(MODEL_PATH))
+                if keras_model is None:
+                    logger.error("Failed to load Keras model")
+                    return False
+                
+                # Quantize the model
+                logger.info("Starting model quantization...")
+                quantized_path = quantize_model(keras_model)
+                if quantized_path is None:
+                    logger.error("Failed to quantize model")
+                    return False
+                
+                # Clear Keras model from memory
+                del keras_model
+                gc.collect()
+                
+                # Load the quantized model
+                logger.info("Loading quantized model...")
+                interpreter = tf.lite.Interpreter(model_path=str(quantized_path))
+                interpreter.allocate_tensors()
+                model = interpreter
             
             if model is None:
                 logger.error("Model loaded but returned None")
                 return False
                 
             logger.info("Model loaded successfully")
-            logger.info(f"Model input shape: {model.input_shape}")
-            logger.info(f"Model output shape: {model.output_shape}")
             
             # Clear any unused memory
             gc.collect()
