@@ -1,1 +1,1 @@
-web: gunicorn app:app --timeout 300 --workers 1 --threads 1 --worker-class gevent --worker-tmp-dir /dev/shm --max-requests 1 --max-requests-jitter 1 --log-level debug --preload --worker-connections 1 --keep-alive 5 --bind 0.0.0.0:$PORT
+web: gunicorn app:app --timeout 300 --workers 1 --threads 1 --worker-class gevent --worker-tmp-dir /dev/shm --max-requests 1 --max-requests-jitter 1 --log-level debug --preload --worker-connections 1 --keep-alive 5 --bind 0.0.0.0:$PORT --graceful-timeout 120
